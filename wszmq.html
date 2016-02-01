@@ -2,9 +2,12 @@
 
     <head>
         <title>Telnet client using WebSockets</title>
-        <script src="include/util.js"></script>
+        <script src="http://rawgit.com/kanaka/websockify/master/include/util.js"></script>
+        <script src="http://rawgit.com/kanaka/websockify/master/include/websock.js"></script>
+        <script src="http://rawgit.com/granolamatt/WebsocketZMQ/master/include/wszmq.js"></script>
+        <!--<script src="include/util.js"></script>
         <script src="include/websock.js"></script>
-        <script src="include/wszmq.js"></script> 
+        <script src="include/wszmq.js"></script> -->
         <!-- Uncomment to activate firebug lite -->
         <!--
         <script type='text/javascript' 
@@ -42,9 +45,9 @@
             var messageCallback = function(msg) {
                 Util.Debug("Got a good message size " + msg.data.byteLength + " more " + msg.more);
                 var pre = document.getElementById('terminal');
-                pre.innerHTML ='<p> Got back: ' + String.fromCharCode.apply(null, new Uint8Array(msg.data)) + '</p>' + pre.innerHTML;
+                pre.innerHTML = pre.innerHTML + '<p> Got back: ' + String.fromCharCode.apply(null, new Uint8Array(msg.data)) + '</p>';
             }
-            
+
             var mycallback = function() {
                 Util.Debug("Connect callback was made");
                 var pre = document.getElementById('terminal');
