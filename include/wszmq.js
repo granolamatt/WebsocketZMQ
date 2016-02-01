@@ -1,33 +1,5 @@
 "use strict";
 
-/*
- * WebSockets telnet client
- * Copyright (C) 2011 Joel Martin
- * Licensed under LGPL-3 (see LICENSE.txt)
- *
- * Includes VT100.js from:
- *   http://code.google.com/p/sshconsole
- * Which was modified from:
- *   http://fzort.org/bi/o.php#vt100_js
- *
- * Telnet protocol:
- *   http://www.networksorcery.com/enp/protocol/telnet.htm
- *   http://www.networksorcery.com/enp/rfc/rfc1091.txt
- *
- * ANSI escape sequeneces:
- *   http://en.wikipedia.org/wiki/ANSI_escape_code
- *   http://ascii-table.com/ansi-escape-sequences-vt-100.php
- *   http://www.termsys.demon.co.uk/vtansi.htm
- *   http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
- *
- * ASCII codes:
- *   http://en.wikipedia.org/wiki/ASCII
- *   http://www.hobbyprojects.com/ascii-table/ascii-table.html
- *
- * Other web consoles:
- *   http://stackoverflow.com/questions/244750/ajax-console-window-with-ansi-vt100-support
- */
-
 function WSZMQ(stype, connect_callback, message_callback, disconnect_callback) {
 
     var that = {},
@@ -188,7 +160,7 @@ function WSZMQ(stype, connect_callback, message_callback, disconnect_callback) {
             if (!(connect_callback === undefined)) {
                 connect_callback();
             }
-            
+
         }
     }
 
@@ -216,6 +188,9 @@ function WSZMQ(stype, connect_callback, message_callback, disconnect_callback) {
 
     function do_step2() {
         var len = ws.rQlen();
+        if (len < 54) {
+            return;
+        }
         var arr = ws.rQshiftBytes(len);
         //Util.Debug("Step 2 received array '" + arr + "'");
 
@@ -265,11 +240,14 @@ function WSZMQ(stype, connect_callback, message_callback, disconnect_callback) {
     function do_step1() {
         Util.Debug("Got a message length " + ws.rQlen());
         var len = ws.rQlen();
-        var arr = ws.rQshiftBytes(len);
+        if (len < 10) {
+            that.disconnect();
+            return;
+        }
+        var arr = ws.rQshiftBytes(10);
         //Util.Debug("Step 1 received array '" + arr + "'");
         var validGreeting = false;
         if (arr[0] === 0xff) {
-
             var val = 0;
             for (var cnt = 1; cnt < 8; cnt++) {
                 val += arr[cnt];
@@ -284,11 +262,11 @@ function WSZMQ(stype, connect_callback, message_callback, disconnect_callback) {
             //Util.Debug("Got a valid greeting");
             // The version number can be at end of greeting, but I have seen
             // it on its own or at start of next message
-            if (arr.length == 11) {
-                version = arr[10];
-                //Util.Debug("Version is " + version);
+            if (len == 64) {
+                do_step2();
+            } else {
+                ws.on('message', do_step2);
             }
-            ws.on('message', do_step2);
         } else {
             Util.Error("Not a valid greeting");
             that.disconnect();
